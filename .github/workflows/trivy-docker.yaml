@@ -8,6 +8,10 @@ on:
 
 jobs:
   build-and-scan:
+    permissions:
+      contents: read 
+      security-events: write
+      
     runs-on: ubuntu-24.04
 
     steps:
