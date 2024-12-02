@@ -4,11 +4,9 @@ on:
   pull_request:
     branches:
       - main
-      - develop
-      - PS-87-CICHECKS
   push:
     branches:
-      - PS-87-CICHECKS
+      - main
 
 jobs:
   lint:
