@@ -1,0 +1,33 @@
+name: Test Linting
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - PS-87-CICHECKS
+  push:
+    branches:
+      - PS-87-CICHECKS
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Run Spotless Apply
+      run: ./gradlew spotlessApply
+
+    - name: Run Checkstyle
+      run: ./gradlew checkstyleMain
+
+    

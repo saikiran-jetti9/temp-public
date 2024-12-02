@@ -1,0 +1,43 @@
+name: Trivy Scanning
+on:
+  push:
+    branches:
+      - PS-87-CICHECKS
+  pull_request:
+jobs:
+  trivy_scan:
+    name: trivy_scan
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # - name: Run Trivy vulnerability scanner in repo mode
+      #   uses: aquasecurity/trivy-action@v0.33.0
+      #   with:
+      #     scan-type: 'fs'
+      #     ignore-unfixed: true
+      #     format: 'table'
+      #     output: 'trivy-results.txt'
+      #     severity: 'LOW,MEDIUM,HIGH,CRITICAL'
+
+
+      # - name: Upload Trivy SARIF Report
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: trivy-report
+      #     path: trivy-results.txt
+
+       - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

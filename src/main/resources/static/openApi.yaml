@@ -1,0 +1,650 @@
+openapi: 3.0.1
+
+info:
+  title: Beeja - Accounts Service
+  version: v1
+  description: |- 
+    `Product of tech.at.core`
+    API documentation for the Beeja Open API application. It allows customer to access
+        their data via a separate API secured by an API key, secret and permissions.
+
+        ## Authentication & Authorization
+
+        The Beeja Public API uses Google as its identity 
+        and authentication system, using OAuth2 / OpenID Connect. Additionally an API key/secret 
+        authentication method is offered.
+
+        - **Token-based:** A client can also directly send a Google OAuth2 access 
+          token to any endpoint ([Bearer Token Authentication][oauth2-bearer]). 
+          Its a Client Credential flow and used for machine to machine communication.
+
+        - **API key/secret:** The endpoints of the application are also accessible via an API key 
+          and API secret as header information. Generating the Open API key and secret is only possible 
+          on SBOX environment. Generating and getting API keys endpoints are not exposed to DEV, REVIEW 
+          or PROD.
+
+        ### Authorization Levels
+
+        Most of the API's endpoints require certain functional specific scopes depending on which endpoint
+        is triggered. Supported scopes 
+
+externalDocs:
+  description: Explore Beeja Application
+  url: https://dev.beeja.techatcore.com/
+
+servers:
+  - url: https://dev.beeja.techatcore.com/accounts
+    description: Beeja Accounts - Dev
+  - url: http://localhost:8000/accounts
+    description: Beeja Accounts
+
+tags:
+  - name: Accounts-Management
+    description: To manage and create all the accounts.
+
+security:
+  - StagingAccessToken: [ ]
+
+paths:
+  /v1/users/{employeeId}:
+    put:
+      operationId: updateUser
+      summary: to update the details of the employee
+      tags:
+        - employee-controller
+      security:
+        - StagingAccessToken:
+            - beeja.api.accounts
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+        required: true
+      responses:
+        '200':
+          description: The updated employee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Unknown or inaccessible asset list
+          content:
+            application/json:
+              example:
+                failureReason: EMPLOYEE_NOT_FOUND
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{employeeId}/change-status:
+    put:
+      operationId: changeEmployeeStatus
+      summary: to update the status of the employee
+      tags:
+        - employee-controller
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User status updated successfully
+        400':
+          description: User not found
+          content:
+            application/json:
+              example:
+                failureReason: BAD_REQUEST
+                details:
+                  message: User not found
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users:
+    get:
+      operationId: getAllEmployees
+      tags:
+        - employee-controller
+      summary:
+        to get the list of all employees
+      responses:
+        '200':
+          description: A list of all employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createEmployee
+      summary : create a new employee
+      tags:
+        - employee-controller
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '201':
+          description: The created employee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid parameter
+          content:
+            application/json:
+              example:
+                failureReason: BAD_REQUEST
+                details:
+                  message: required fields must not be null
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/organizations:
+    get:
+      tags:
+        - Organizations
+      operationId: getAllOrganizations
+      responses:
+        '200':
+          description: A list of all organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createOrganization
+      summary: Create an organization
+      tags:
+        - organization-controller
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+        required: true
+      responses:
+        '201':
+          description: The created organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+            description: Invalid parameter
+            content:
+              application/json:
+                example:
+                  failureReason: BAD_REQUEST
+                  details:
+                    message: must not be null
+                schema:
+                  $ref: "#/components/schemas/Error"
+        '409':
+          description: Organization Already exist
+          content:
+            application/json:
+              example:
+                failureReason: VERSION_CONFLICT
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{employeeId}/change-roles:
+    patch:
+      tags:
+        - employee-controller
+      operationId: updateUserRoles
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRoleRequest'
+        required: true
+      responses:
+        '200':
+          description: User roles updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Unknown or inaccessible asset list
+          content:
+            application/json:
+              example:
+                failureReason: USER_NOT_FOUND
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{email}:
+    get:
+      operationId: getUserByEmail
+      summary: get user based on email
+      tags:
+        - employee-controller
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+        '404':
+          description: Unknown or inaccessible asset list
+          content:
+            application/json:
+              example:
+                failureReason: USER_NOT_FOUND
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/users/me:
+    get:
+      tags:
+        - employee-controller
+      operationId: getLoggedInUser
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/User'
+#  /v1/users/ispresent/{email}:
+#    get:
+#      tags:
+#        - employee-controller
+#      operationId: isUserPresentWithMail
+#      parameters:
+#        - name: email
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#      responses:
+#        "200":
+#          description: OK
+#          content:
+#            '*/*':
+#              schema:
+#                type: boolean
+  /v1/users/empid/{employeeId}:
+    get:
+      tags:
+        - employee-controller
+      operationId: getUserByEmployeeId
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+        '404':
+          description: Unknown or inaccessible asset list
+          content:
+            application/json:
+              example:
+                failureReason: USER_NOT_FOUND
+              schema:
+                $ref: "#/components/schemas/Error"
+          '500':
+            $ref: '#/components/responses/InternalServerError'
+  /v1/organizations/{organizationId}:
+    get:
+      operationId: getOrganizationById
+      summary: Get an organization by ID
+      tags:
+        - organization-controller
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          description: ID of the organization
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          description: Unknown or inaccessible asset list
+          content:
+            application/json:
+              example:
+                failureReason: ORGANIZATION_NOT_FOUND
+              schema:
+                $ref: "#/components/schemas/Error"
+          '500':
+            $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteOrganizatiobById
+      summary: Delete an organization by ID
+      tags:
+        - organization-controller
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The organization has been successfully deleted
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/organizations/{organizationId}/employees:
+    get:
+      operationId: getAllEmployeesByOrganizationId
+      summary: Get all employees by organization ID
+      tags:
+        - organizations
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of all employees in the organization
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          '404':
+            description: Unknown or inaccessible asset list
+            content:
+              application/json:
+                example:
+                  failureReason: EMPLOYEE_NOT_FOUND
+                schema:
+                  $ref: "#/components/schemas/Error"
+          '500':
+            $ref: '#/components/responses/InternalServerError'
+  /:
+    get:
+      tags:
+        - hello-world
+      operationId: hello
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  securitySchemes:
+    googleOAuth2:
+      type: oauth2
+      description: |
+        `Use This Auth Service for Local Environment`
+        After successfully logged in, come back to this window and close this popup. Cool, now you can access Endpoints
+      flows:
+        explicit:
+          authorizationUrl: http://localhost:8000/oauth2/authorization/google
+    googleOAuth2AuthorizationCode:
+      type: oauth2
+      description: |
+        `Use This Auth Service for Dev Environment`
+        After successfully logged in, come back to this window and close this popup. Cool, now you can access Endpoints
+      flows:
+        explicit:
+          authorizationUrl: https://dev.beeja.techatcore.com/oauth2/authorization/google
+
+  schemas:
+    Organization:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "techatcore"
+          description: name of the organization
+        email:
+          type: string
+          example: "itdept@techatcore.com"
+          description: email of the organization
+        subscriptionId:
+          type: string
+          example: "12345"
+          description: subscription Id provided for the organization
+        location:
+          type: string
+          example: "NZB"
+          description: where the organization is locaated
+        emailDomain:
+          type: string
+          example: "techatcore.com"
+          description: the domain with which the mail ends
+        contactMail:
+          type: string
+          example: "hello@techatcore.com"
+          description: The contact mail id provided
+        website:
+          type: string
+          example: "https://techatcore.com"
+          description: website to view the organization details
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+          description: the id that is generated
+        name:
+          type: string
+          example: "ROLE_EMPLOYEE"
+          description: the role of the employee
+        permissions:
+          uniqueItems: true
+          type: array
+          example: [REM]
+          description: the permissions that are provided for the employee
+    User:
+      required:
+        - email
+        - employeeId
+        - firstName
+        - lastName
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+          description: the uniquely generated id
+        firstName:
+          type: string
+          example: "joe"
+          description: first name of the user
+        lastName:
+          type: string
+          example: "dell"
+          description: last name of the user
+        email:
+          type: string
+          example: "joe5@gmail.com"
+          description: mail id of the user
+        roles:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        employeeId:
+          type: string
+        organizations:
+          $ref: '#/components/schemas/Organization'
+        userPreferences:
+          $ref: '#/components/schemas/UserPreferences'
+        permissions:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        createdBy:
+          type: string
+          example: "rav5@gmail.com"
+          description: the mail id of the user
+        modifiedBy:
+          type: string
+          example: "ra5@gmail.com"
+          description: mail id of the user
+        createdAt:
+          type: string
+          example: 2023-12-20T09:30:08.252+00:00
+          format: date-time
+        modifiedAt:
+          type: string
+          example: 2023-12-20T09:30:08.252+00:00
+          format: date-time
+        active:
+          type: boolean
+          example: "true"
+          description: whether the user is active or not
+    roles:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "ROLE_SUPER_ADMIN"
+          description: the role of the employee
+        code:
+          type: string
+          example: "SADMN"
+          description: code provided for the role
+        permissions:
+          type: array
+          example: ["REX"]
+          description: the list of permissions provided
+    requests:
+    UpdateUserRoleRequest:
+      type: object
+      properties:
+        roles:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        userPreferences:
+          type: UserPreferences(theme,language,font)
+        email:
+          type: string
+
+    Error:
+      type: object
+      description: An error response.
+      required:
+        - code
+      properties:
+        type:
+          type: string
+          example: authentication_error
+          description: An error type identifying the category of error.
+        code:
+          type: string
+          example: USER_NOT_FOUND
+          description: An error code to indicate short version of error.
+        message:
+          type: string
+          example: The beeja user has not been configured to use APIs yet
+          description: An error description.
+        details:
+          type: object
+          example:
+            field: firstName
+            message: must not be empty
+          description: Further details about the error. The set of
+            properties in this object depends on the type of error.
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Missing authentication.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            failureReason: UNAUTHORIZED
+            details: "Please sign-in into Beeja"
+
+      Forbidden:
+        description: Valid credentials but not enough privileges
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            example:
+              failureReason: USER_NOT_WHITELISTED
+              details: "Access Denied- You have no required permissions to do this operation"
+
+      BadRequest:
+        description: Something wrong with request parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            example:
+              failureReason: BAD_REQUEST
+              details: "Internal Server Error"
+

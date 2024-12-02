@@ -1,0 +1,66 @@
+steps:
+  # Step 1: Gradle jib
+  - name: gradle:7.6-jdk17
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      gradle jib --image=$_GCR_REGISTRY/$_GCP_ID/$_GCR_PATH:$SHORT_SHA
+
+  # Step 2: Access the GitHub OAuth token from Secret Manager
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      gcloud secrets versions access latest --secret=$_GIT_SECRET > /root/git_token
+    volumes:
+    - name: 'key'
+      path: /root
+
+  # Step 3: Update image tag in kustomize
+  - name: gcr.io/cloud-builders/git
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      echo "Cloning repo ..."
+      cd /root
+      git clone -b $_REPO_BRANCH https://$_GIT_USER:$(cat /root/git_token)@github.com/$_ORG/$_GKE_REPO.git
+      cd $_GKE_REPO
+      echo -n $SHORT_SHA >overlays/$_STAGE/versions/api_acc.version
+    volumes:
+    - name: 'key'
+      path: '/root'
+
+  # Step 4: Deploy new image
+  - name: gcr.io/cloud-builders/kubectl
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      ls /root
+      gcloud container clusters get-credentials $_CLUSTER_ID --zone $_ZONE --project $_GCP_ID
+      cd /root/$_GKE_REPO
+      kubectl apply -k overlays/$_STAGE
+    volumes:
+    - name: 'key'
+      path: '/root'
+
+  # Step 5: push changes to gke repository
+  - name: gcr.io/cloud-builders/git
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      cd /root/$_GKE_REPO
+      git add .
+      git config user.name $_GIT_USER
+      git config user.email $_GIT_USER_MAIL
+      git commit -m "deployed, image tag with short_sa: $SHORT_SHA"
+      git push origin $_REPO_BRANCH
+    volumes:
+    - name: 'key'
+      path: '/root' 
+options:
+  logging: CLOUD_LOGGING_ONLY
