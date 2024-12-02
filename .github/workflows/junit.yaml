@@ -1,11 +1,10 @@
 name: Run JUnit Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - PS-87-CI/CD
-  pull_request:
 
 jobs:
   junit-tests:

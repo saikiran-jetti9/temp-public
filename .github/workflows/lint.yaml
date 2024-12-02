@@ -4,10 +4,7 @@ on:
   pull_request:
     branches:
       - main
-      - PS-87-CICHECKS
-  push:
-    branches:
-      - PS-87-CICHECKS
+      - PS-87-CI/CD
 
 jobs:
   lint:

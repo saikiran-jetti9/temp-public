@@ -1,10 +1,6 @@
 name: Build and Scan docker image with Trivy
 
 on:
-  push:
-    branches:
-      - main
-      - PS-87-CI/CD
   pull_request:
     branches:
       - main
@@ -29,8 +25,19 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-      - name: Setup Trivy
+      - name: Trivy Image Scanning for Vulnarability
         uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: my-app:1.0
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
-      - name: Scan Docker Image
-        run: trivy image --scanners vuln,misconfig --severity HIGH,CRITICAL my-app:${{ github.sha }}
+      # - name: Setup Trivy
+      #   uses: aquasecurity/trivy-action@master
+
+      # - name: Scan Docker Image
+      #   run: trivy image --scanners vuln,misconfig --severity HIGH,CRITICAL my-app:${{ github.sha }}
