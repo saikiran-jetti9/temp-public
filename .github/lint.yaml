@@ -4,11 +4,13 @@ on:
   pull_request:
     branches:
       - main
+      - PS-87-CI/CD
   push:
     branches:
       - main
+      - PS-87-CI/CD
 
-jobs:
+jobs
   lint:
     runs-on: ubuntu-latest
 
