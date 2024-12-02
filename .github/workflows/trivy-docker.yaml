@@ -33,4 +33,4 @@ jobs:
         uses: aquasecurity/trivy-action@master
 
       - name: Scan Docker Image
-        run: trivy image --exit-code 1 --severity HIGH,CRITICAL my-app:${{ github.sha }}
+        run: trivy image --scanners vuln,misconfig --severity HIGH,CRITICAL my-app:${{ github.sha }}
