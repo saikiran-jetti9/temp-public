@@ -1,0 +1,49 @@
+name: Build and Scan docker image with Trivy
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-scan:
+    permissions:
+      contents: read 
+      security-events: write
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Docker Image with Jib
+        run: ./gradlew jibDockerBuild -Djib.to.image=my-app:1.0
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Trivy Image Scanning for Vulnarability
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: my-app:1.0
+          format: 'sarif'
+          output: 'trivy-docker.sarif'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-docker.sarif'
+
+      # - name: Setup Trivy
+      #   uses: aquasecurity/trivy-action@master
+
+      # - name: Scan Docker Image
+      #   run: trivy image --scanners vuln,misconfig --severity HIGH,CRITICAL my-app:${{ github.sha }}
