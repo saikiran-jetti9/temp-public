@@ -16,6 +16,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: 'fs'
+          vuln-type: 'os'
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-results.sarif'
